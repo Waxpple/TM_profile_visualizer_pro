@@ -1,6 +1,5 @@
 TM_profile_visualizer_pro
 =====
-**How to build the project**
 # Pre-request
 ```
 apt-get update -y
