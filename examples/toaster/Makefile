@@ -29,7 +29,7 @@ CXXFLAGS = -I$(IMGUI_DIR) -I$(IMGUI_DIR)/backends
 # If Define DEBUG flag will print debug info
 ##---------------------------------------------------------------------
 
-CXXFLAGS += -g -Wall -Wformat -fno-stack-limit -std=c++17 
+CXXFLAGS += -g -Wall -Wformat -fno-stack-limit -std=c++17 -DDEBUG 
 LIBS = 
 
 ##---------------------------------------------------------------------

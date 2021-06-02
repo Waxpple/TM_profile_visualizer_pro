@@ -48,6 +48,9 @@ using namespace gl;
 // Include glfw3.h after our OpenGL definitions
 #include <GLFW/glfw3.h>
 
+// USER DEFINE!
+#define NUMBER_OF_CORE 4
+#define RECORD_N 4
 // [Win32] Our example includes a copy of glfw3.lib pre-compiled with VS2010 to maximize ease of testing and compatibility with old VS compilers.
 // To link with VS2010-era libraries, VS2015+ requires linking with legacy_stdio_definitions.lib, which we do using this pragma.
 // Your own project should not be affected, as you are likely to link with a newer binary of GLFW that is adequate for your version of Visual Studio.
@@ -58,22 +61,51 @@ using namespace gl;
 namespace ImPlot2 {
 
 template <typename T>
-int BinarySearch(const T* arr, int l, int r, T x) {
+int BinarySearch(const T* arr, const T* arrs, const T* thread_id, int l, int r, T x, T y) {
     if (r >= l) {
         int mid = l + (r - l) / 2;
-        if (arr[mid] == x)
+        #ifdef DEBUG
+            printf("the x now is %f\n",x);
+            printf("the mid now is %d\n",mid);
+        #endif
+        if (arrs[mid] > x && arr[mid] < x && thread_id[mid] == y )
             return mid;
+        else
+            for (int i=-NUMBER_OF_CORE;i<NUMBER_OF_CORE;++i)
+            {   
+                if(mid+i>-1 && mid+i<l+1)
+                    if (arrs[mid+i] > x && arr[mid+i] < x && thread_id[mid+i] == y )
+                        return mid+i;
+            }
         if (arr[mid] > x)
-            return BinarySearch(arr, l, mid - 1, x);
-        return BinarySearch(arr, mid + 1, r, x);
+            return BinarySearch(arr, arrs, thread_id, l, mid - 1, x, y);
+        return BinarySearch(arr, arrs, thread_id, mid + 1, r, x, y);
     }
     return -1;
 }
-void PlotTM(const char* label_id, const double* xs, const double* xss , const double* thread_id, const double* event_type, int count, ImVec4 commit, ImVec4 abort) {
+void PlotTM(const char* label_id, const double* xs, const double* xss , const double* thread_id, const double* event_type, const long long int* memory_addr, int count, ImVec4 commit, ImVec4 abort) {
 
     // get ImGui window DrawList
     ImDrawList* draw_list = ImPlot::GetPlotDrawList();
     
+
+    //tool
+    if (ImPlot::IsPlotHovered())
+    {
+        ImPlotPoint mouse   = ImPlot::GetPlotMousePos();
+        int idx = BinarySearch(xs, xss, thread_id, 0, count-1, mouse.x, round(mouse.y));
+        #ifdef DEBUG
+            printf("The idx is %d \n\n",idx);
+        #endif
+        if (idx!=-1){
+            ImGui::BeginTooltip();
+            char buff[32];
+            ImGui::Text("Start:     %.2f ns",xs[idx]);
+            ImGui::Text("Memory access %lld",memory_addr[idx]);
+            ImGui::EndTooltip();
+        }
+        //printf("The mouse is currently at x:%f\n\n",mouse.x);
+    }
     // begin plot item
     if (ImPlot::BeginItem(label_id)) {
         // override legend icon color
@@ -109,6 +141,7 @@ void PlotTM2(const char* label_id, const double* xs, const double* xss , const d
         ImPlot::EndItem();
     }
 }
+
 
 void vector_Random_t_id(int size,std::vector<double>* arr){
     // for(int i=0;i<size;++i){
@@ -163,10 +196,25 @@ void vector_Random_event(int size,std::vector<double>* event){
     event->push_back(1);
     event->push_back(1);
 }
+void vector_Random_memory(int size,std::vector<long long int>* memory_addr){
+    // for(int i=0;i<size;++i){
+    //     event->push_back(rand() % 2);
+        
+    // }
+    memory_addr->push_back(0);
+    memory_addr->push_back(1);
+    memory_addr->push_back(0);
+    memory_addr->push_back(1);
+    memory_addr->push_back(1);
+    memory_addr->push_back(1);
+    memory_addr->push_back(1);
+    memory_addr->push_back(1);
+    memory_addr->push_back(1);
+}
 
-void pairsort(double* a, double* b, double* c, double* d, int n)
+void pairsort(double* a, double* b, double* c, double* d, long long int* e, int n)
 {
-    std::pair<double, std::pair<double, std:: pair <double,double> > > pairt[n];
+    std::pair<double, std::pair<double, std:: pair <double, std::pair<double,long long int> > > > pairt[n];
   
     // Storing the respective array
     // elements in pairs.
@@ -175,7 +223,8 @@ void pairsort(double* a, double* b, double* c, double* d, int n)
         pairt[i].first = a[i];
         pairt[i].second.first = b[i];
         pairt[i].second.second.first = c[i];
-        pairt[i].second.second.second = d[i];
+        pairt[i].second.second.second.first = d[i];
+        pairt[i].second.second.second.second = e[i];
     }
   
     // Sorting the pair array.
@@ -187,7 +236,9 @@ void pairsort(double* a, double* b, double* c, double* d, int n)
         a[i] = pairt[i].first;
         b[i] = pairt[i].second.first;
         c[i] = pairt[i].second.second.first;
-        d[i] = pairt[i].second.second.second;
+        d[i] = pairt[i].second.second.second.first;
+        e[i] = pairt[i].second.second.second.second;
+        
 
     }
 }
@@ -315,12 +366,22 @@ int main(int, char**)
     std::vector<double> xs;
     std::vector<double> xss;
     std::vector<double> event_type;
+    std::vector<long long int> memory_addr;
     std::vector<double> analysis_thread_id;
     std::vector<double> analysis_xs;
     std::vector<double> analysis_xss;
     std::vector<double> analysis_event_type;
+
+    std::vector<double> FGL_thread_id;
+    std::vector<double> FGL_xs;
+    std::vector<double> FGL_xss;
+    std::vector<double> FGL_event_type;
+    std::vector<long long int> FGL_memory_addr;
+
     bool raw = true;
     bool every_100 = false;
+    bool FGL = false;
+    bool flag2 = true;
     float every_transactions = 10.0;
     std::vector<double> matrix;
     static bool initialized_plot = false;
@@ -379,7 +440,11 @@ int main(int, char**)
         fileDialog.Display();
         //select function
         if(fileDialog.HasSelected())
-        {
+        {   
+            
+            //new FGL
+            flag2 = true;
+
             #ifdef DEBUG
             std::cout << "Selected filename" << fileDialog.GetSelected().string() << std::endl;
             #endif
@@ -396,7 +461,7 @@ int main(int, char**)
             xs.clear();
             xss.clear();
             event_type.clear();
-
+            memory_addr.clear();
             while (!inFile.eof())
             {
                 if(getline(inFile,line))
@@ -406,10 +471,10 @@ int main(int, char**)
                     int place=0;
                     while (getline(templine,data,','))
                     {   
-                        switch(place%4)
+                        switch(place%RECORD_N)
                         {
                             case 0:
-                                thread_id.push_back(atof(data.c_str()));
+                                thread_id.push_back(atof(data.c_str())-984968 );
                                 #ifdef DEBUG
                                 std::cout<< "thread=" <<data.c_str()<<std::endl;
                                 #endif
@@ -432,10 +497,18 @@ int main(int, char**)
                                 std::cout<< "event=" <<data.c_str()<<std::endl;
                                 #endif
                                 break;
+                            case 4:
+                                memory_addr.push_back(atof(data.c_str()));
+                                #ifdef DEBUG
+                                std::cout<< "memory=" <<data.c_str()<<std::endl;
+                                #endif
+                                break;                                
+                            default:
+                                break;
                         }
                         place++;
                     }
-                    if(place%4!=0)
+                    if(place%RECORD_N!=0)
                     {
                         std::cout<< "Error[1] File format misfit." << std::endl;
                         thread_id.clear();
@@ -502,6 +575,22 @@ int main(int, char**)
                         event_type.push_back(1);
                         event_type.push_back(1);
                         event_type.push_back(1);
+                        
+                        memory_addr.push_back(0);
+                        memory_addr.push_back(0);
+                        memory_addr.push_back(0);
+                        memory_addr.push_back(0);
+                        memory_addr.push_back(0);
+                        memory_addr.push_back(1);
+                        memory_addr.push_back(1);
+                        memory_addr.push_back(1);
+                        memory_addr.push_back(1);
+                        memory_addr.push_back(1);
+                        memory_addr.push_back(1);
+                        memory_addr.push_back(1);
+                        memory_addr.push_back(1);
+                        memory_addr.push_back(1);
+                        memory_addr.push_back(1);
                         break;
                         
                     }
@@ -512,10 +601,10 @@ int main(int, char**)
             fileDialog.ClearSelected();
 
             // Sort time
-            ImPlot2::pairsort(xs.data(),thread_id.data(),xss.data(),event_type.data(),xs.size());
+            ImPlot2::pairsort(xs.data(),thread_id.data(),xss.data(),event_type.data(),memory_addr.data(),xs.size());
 
         }
-
+        //ImPlot::ShowDemoWindow();
         // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
         {
             ImGui::Begin("TM Visualizer option");                          // Create a window called "Hello, world!" and append into it.
@@ -531,9 +620,10 @@ int main(int, char**)
             ImGui::Checkbox("RAW DATA",&raw);
             // ImGui::SameLine();
             // ImGui::Text("");
-            ImGui::Checkbox("every transactions",&every_100);
+            //ImGui::Checkbox("every transactions",&every_100);
             ImGui::SameLine();
             ImGui::SliderFloat("x",&every_transactions,10.0,1000.0);
+            ImGui::Checkbox("Do fine grain locks",&FGL);
             ImPlot::SetNextPlotLimitsY(-1.0, 6.5);
             ImPlot::SetNextPlotLimitsX(-100, 1500);
             
@@ -548,10 +638,12 @@ int main(int, char**)
                     ImPlot2::vector_Random_xs(size,&xs,&xss,10);
                     //event
                     ImPlot2::vector_Random_event(size,&event_type);
+                    //memory
+                    ImPlot2::vector_Random_memory(size,&memory_addr);
                     initialized_plot = true;
                 }
                 
-                ImPlot2::PlotTM("Event",xs.data(), xss.data(), thread_id.data(), event_type.data(), event_type.size(), bullCol, bearCol);
+                ImPlot2::PlotTM("Event",xs.data(), xss.data(), thread_id.data(), event_type.data(), memory_addr.data(),event_type.size(), bullCol, bearCol);
 
                 if(every_100)
                 {   
@@ -602,6 +694,68 @@ int main(int, char**)
                     std::cout<< "the size should be" << floor(event_type.size()/every_transactions) << std::endl;
                     #endif
                     ImPlot2::PlotTM2("Analysis",analysis_xs.data(), analysis_xss.data(), analysis_thread_id.data(), analysis_event_type.data(), analysis_event_type.size(), bullCol, bearCol);
+                }
+                if(FGL)
+                {
+
+                    if(flag2){
+
+                        FGL_xs.clear();
+                        FGL_xss.clear();
+                        FGL_thread_id.clear();
+                        FGL_event_type.clear();
+                        FGL_memory_addr.clear();
+
+
+                        for(int j=0;j<(int)event_type.size();j++)
+                        {
+                            FGL_xs.push_back(xs[j]);
+                            FGL_xss.push_back(xss[j]);
+                            FGL_thread_id.push_back(thread_id[j]-6);
+                            FGL_event_type.push_back(event_type[j]);
+                            FGL_memory_addr.push_back(memory_addr[j]);
+                        }
+
+                        
+                        // double temp_xs = FGL_xs[0];
+                        // double temp_thread = FGL_thread_id[0];
+                        // long long int temp_memory_addr= FGL_memory_addr[0];
+                        // FGL_thread_id[0] = FGL_thread_id[0] -6;
+
+                        double record_xss[NUMBER_OF_CORE];
+                        for (int i=0;i<NUMBER_OF_CORE;++i)
+                        {
+                            record_xss[i] = 0;
+                        }
+
+                        for(int i=1;i<(int)FGL_event_type.size();++i)
+                        {   
+                            if(FGL_thread_id[i] != FGL_thread_id[i-1])
+                            {
+                                if(FGL_memory_addr[i] != FGL_memory_addr[i-1])
+                                {
+                                    if(FGL_xs[i-1] > record_xss[(int)FGL_thread_id[i]])
+                                    {
+                                        FGL_xss[i] = FGL_xss[i]-(FGL_xs[i]-FGL_xs[i-1]);
+                                        FGL_xs[i] = FGL_xs[i-1];
+                                    }
+                                    else
+                                    {
+                                        FGL_xss[i] = FGL_xss[i]-(FGL_xs[i]-record_xss[(int)FGL_thread_id[i]]);
+                                        FGL_xs[i] = record_xss[(int)FGL_thread_id[i]];
+                                    }
+                                }
+                            }
+                            record_xss[(int)FGL_thread_id[i]] = FGL_xss[i];
+                            printf("Thread ID [%f] : start: %f stop: %f \n\n",FGL_thread_id[i],FGL_xs[i],FGL_xss[i]);
+                            // temp_xs = FGL_xs[i];
+                            // temp_thread = FGL_thread_id[i];
+                            // temp_memory_addr = FGL_memory_addr[i];
+                            // FGL_thread_id[i] = FGL_thread_id[i]-6;
+                        }
+                        flag2 = false;
+                    }
+                    ImPlot2::PlotTM("FGL",FGL_xs.data(),FGL_xss.data(),FGL_thread_id.data(),FGL_event_type.data(),FGL_memory_addr.data(),FGL_event_type.size(), bullCol, bearCol);
                 }
                 ImPlot::EndPlot();
             }
