@@ -51,6 +51,7 @@ using namespace gl;
 // USER DEFINE!
 #define NUMBER_OF_CORE 4
 #define RECORD_N 4
+
 // [Win32] Our example includes a copy of glfw3.lib pre-compiled with VS2010 to maximize ease of testing and compatibility with old VS compilers.
 // To link with VS2010-era libraries, VS2015+ requires linking with legacy_stdio_definitions.lib, which we do using this pragma.
 // Your own project should not be affected, as you are likely to link with a newer binary of GLFW that is adequate for your version of Visual Studio.
@@ -60,8 +61,8 @@ using namespace gl;
 // Encapsulates examples for customizing ImPlot.
 namespace ImPlot2 {
 
-template <typename T>
-int BinarySearch(const T* arr, const T* arrs, const T* thread_id, int l, int r, T x, T y) {
+
+int BinarySearch(unsigned long long int* arr, unsigned long long int* arrs, double* thread_id, int l, int r, double x, double y) {
     if (r >= l) {
         int mid = l + (r - l) / 2;
         #ifdef DEBUG
@@ -83,24 +84,30 @@ int BinarySearch(const T* arr, const T* arrs, const T* thread_id, int l, int r, 
     }
     return -1;
 }
-void PlotTM(const char* label_id, const double* xs, const double* xss , const double* thread_id, const double* event_type , int count, ImVec4 rollback, ImVec4 delay, ImVec4 commit) {
+void PlotTM(char* label_id, unsigned long long int* xs, unsigned long long int* xss , double* thread_id, int* event_type , int count, ImVec4 rollback, ImVec4 delay, ImVec4 commit) {
 
     // get ImGui window DrawList
     ImDrawList* draw_list = ImPlot::GetPlotDrawList();
-    
-
+    // ImPlot::FitPointAxis(GImPlot->CurrentPlot->XAxis,GImPlot->ExtentsX, (double) xs[0]);
+    // ImPlot::FitPointAxis(GImPlot->CurrentPlot->XAxis,GImPlot->ExtentsX, (double) xs[count-1]);
     //tool
     if (ImPlot::IsPlotHovered())
     {
         ImPlotPoint mouse   = ImPlot::GetPlotMousePos();
-        int idx = BinarySearch(xs, xss, thread_id, 0, count-1, mouse.x, round(mouse.y));
+        int idx =0;
+        idx = BinarySearch(xs, xss, thread_id, 0, count-1, mouse.x, round(mouse.y));
         #ifdef DEBUG
             printf("The idx is %d \n\n",idx);
         #endif
         if (idx!=-1){
             ImGui::BeginTooltip();
-            char buff[32];
-            ImGui::Text("Start:     %.2f ns",xs[idx]);
+            
+            ImGui::Text("Thread:    %f",thread_id[idx]);
+            ImGui::Text("Start:     %lld ns",xs[idx]);
+            ImGui::Text("Stop:     %lld ns",xss[idx]);
+            ImGui::Text("Duration:  %lld ns",xss[idx]-xs[idx]);
+            ImGui::Text("Event:     %s", (event_type[idx]==0)? "rollback" : (event_type[idx]==1)? "delay" : "commit");
+            
             ImGui::EndTooltip();
         }
         //printf("The mouse is currently at x:%f\n\n",mouse.x);
@@ -140,77 +147,15 @@ void PlotTM2(const char* label_id, const double* xs, const double* xss , const d
         ImPlot::EndItem();
     }
 }
+template<typename T>
+void find_min_max(std::vector<T>* xs,std::vector<T>* xss,T* min, T* max)
+{
+    *min = *min_element(xs->begin(),xs->end());
+    *max = *max_element(xss->begin(),xss->end());
+    
+}
 
-
-void vector_Random_t_id(int size,std::vector<double>* arr){
-    // for(int i=0;i<size;++i){
-    //     arr->push_back(rand() % 4);
-    // }
-    arr->push_back(5);
-    arr->push_back(5);
-    arr->push_back(5);
-    arr->push_back(5);
-    arr->push_back(2);
-    arr->push_back(1);
-    arr->push_back(0);
-    arr->push_back(1);
-    arr->push_back(2);
-}
-void vector_Random_xs(int size,std::vector<double>* xs,std::vector<double>* xss, int limit){
-    // for(int i=0;i<size;++i){
-    //     xs->push_back(rand() % (limit*5) );
-    //     xss->push_back(xs->at(i) + rand() %200 /20.0);
-    // }
-    xs->push_back(100);
-    xs->push_back(150);
-    xs->push_back(300);
-    xs->push_back(350);
-    xs->push_back(50);
-    xs->push_back(100);
-    xs->push_back(150);
-    xs->push_back(350);
-    xs->push_back(400);
-    xss->push_back(150);
-    xss->push_back(200);
-    xss->push_back(350);
-    xss->push_back(400);
-    xss->push_back(100);
-    xss->push_back(150);
-    xss->push_back(350);
-    xss->push_back(400);
-    xss->push_back(450);
-}
-void vector_Random_event(int size,std::vector<double>* event){
-    // for(int i=0;i<size;++i){
-    //     event->push_back(rand() % 2);
-        
-    // }
-    event->push_back(0);
-    event->push_back(1);
-    event->push_back(0);
-    event->push_back(1);
-    event->push_back(1);
-    event->push_back(1);
-    event->push_back(1);
-    event->push_back(1);
-    event->push_back(1);
-}
-void vector_Random_memory(int size,std::vector<long long int>* memory_addr){
-    // for(int i=0;i<size;++i){
-    //     event->push_back(rand() % 2);
-        
-    // }
-    memory_addr->push_back(0);
-    memory_addr->push_back(1);
-    memory_addr->push_back(0);
-    memory_addr->push_back(1);
-    memory_addr->push_back(1);
-    memory_addr->push_back(1);
-    memory_addr->push_back(1);
-    memory_addr->push_back(1);
-    memory_addr->push_back(1);
-}
-void pairsort(double* a, double* b, double* c, double* d, int n)
+void pairsort(unsigned long long int* a, double* b, unsigned long long int* c, int* d, int n)
 {
     std::pair<double, std::pair<double, std:: pair <double, double > > > pairt[n];
   
@@ -238,37 +183,6 @@ void pairsort(double* a, double* b, double* c, double* d, int n)
 
     }
 }
-// void pairsort(double* a, double* b, double* c, double* d, long long int* e, int n)
-// {
-//     std::pair<double, std::pair<double, std:: pair <double, std::pair<double,long long int> > > > pairt[n];
-  
-//     // Storing the respective array
-//     // elements in pairs.
-//     for (int i = 0; i < n; i++) 
-//     {
-//         pairt[i].first = a[i];
-//         pairt[i].second.first = b[i];
-//         pairt[i].second.second.first = c[i];
-//         pairt[i].second.second.second.first = d[i];
-//         pairt[i].second.second.second.second = e[i];
-//     }
-  
-//     // Sorting the pair array.
-//     std::sort(pairt, pairt + n);
-      
-//     // Modifying original arrays
-//     for (int i = 0; i < n; i++) 
-//     {
-//         a[i] = pairt[i].first;
-//         b[i] = pairt[i].second.first;
-//         c[i] = pairt[i].second.second.first;
-//         d[i] = pairt[i].second.second.second.first;
-//         e[i] = pairt[i].second.second.second.second;
-        
-
-//     }
-// }
-
 
 } // namespace MyImPlot
 
@@ -356,7 +270,7 @@ int main(int, char**)
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();
     //ImGui::StyleColorsClassic();
-
+    
     // Setup Platform/Renderer backends
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init(glsl_version);
@@ -389,23 +303,34 @@ int main(int, char**)
 
     int size = 5;
     std::vector<double> thread_id;
-    std::vector<double> xs;
-    std::vector<double> xss;
-    std::vector<double> event_type;
-    std::vector<long long int> memory_addr;
+    std::vector<unsigned long long int> xs;
+    std::vector<unsigned long long int> xss;
+    std::vector<int> event_type;
+    // std::vector<long long int> memory_addr;
     std::vector<double> analysis_thread_id;
-    std::vector<double> analysis_xs;
-    std::vector<double> analysis_xss;
+    std::vector<unsigned long long int> analysis_xs;
+    std::vector<unsigned long long int> analysis_xss;
     std::vector<double> analysis_event_type;
 
-    std::vector<double> FGL_thread_id;
-    std::vector<double> FGL_xs;
-    std::vector<double> FGL_xss;
-    std::vector<double> FGL_event_type;
-    std::vector<long long int> FGL_memory_addr;
+    //
+    std::vector<double> center_point;
+    std::vector<double> abort_rate;
+
+    // std::vector<double> FGL_thread_id;
+    // std::vector<double> FGL_xs;
+    // std::vector<double> FGL_xss;
+    // std::vector<double> FGL_event_type;
+    // std::vector<long long int> FGL_memory_addr;
+
+    //bool
+    bool readfile = false;
+
 
     bool raw = true;
-    bool every_100 = false;
+    bool every_ns = false;
+    bool calculate_0 = false;
+
+
     bool FGL = false;
     bool flag2 = true;
     float every_transactions = 10.0;
@@ -418,6 +343,60 @@ int main(int, char**)
     static ImVec4 rollback = ImVec4(1.000f, 0.000f, 0.000f, 1.000f);
     //delay
     static ImVec4 delay = ImVec4(0.000f, 0.000f, 1.000f, 1.000f);
+
+    //statics
+    long long unsigned int *time_min = (long long unsigned int*) malloc(sizeof(long long unsigned int));
+    long long unsigned int *time_max= (long long unsigned int*) malloc(sizeof(long long unsigned int));
+    *time_min = 0;
+    *time_max = 2200;
+    double *core_min = (double*) malloc(sizeof(double));
+    double *core_max = (double*) malloc(sizeof(double));
+    *core_min = -2.0;
+    *core_max = 10.0;
+
+    // initial smilie face
+    thread_id.push_back(5);
+    thread_id.push_back(5);
+    thread_id.push_back(5);
+    thread_id.push_back(5);
+    thread_id.push_back(2);
+    thread_id.push_back(1);
+    thread_id.push_back(0);
+    thread_id.push_back(1);
+    thread_id.push_back(2);
+
+    xs.push_back(1100);
+    xs.push_back(1150);
+    xs.push_back(1300);
+    xs.push_back(1350);
+    xs.push_back(1150);
+    xs.push_back(1100);
+    xs.push_back(1150);
+    xs.push_back(1350);
+    xs.push_back(1400);
+
+    xss.push_back(1150);
+    xss.push_back(1200);
+    xss.push_back(1350);
+    xss.push_back(1400);
+    xss.push_back(1100);
+    xss.push_back(1150);
+    xss.push_back(1350);
+    xss.push_back(1400);
+    xss.push_back(1450);
+
+    event_type.push_back(0);
+    event_type.push_back(0);
+    event_type.push_back(0);
+    event_type.push_back(0);
+    event_type.push_back(0);
+    event_type.push_back(1);
+    event_type.push_back(1);
+    event_type.push_back(1);
+    event_type.push_back(1);
+
+    
+
     // Main loop
     while (!glfwWindowShouldClose(window))
     {
@@ -506,29 +485,23 @@ int main(int, char**)
                                 #endif
                                 break;
                             case 1:
-                                xs.push_back(atof(data.c_str())/100);
+                                xs.push_back(atoll(data.c_str()));
                                 #ifdef DEBUG
                                 std::cout<< "start=" <<data.c_str()<<std::endl;
                                 #endif
                                 break;
                             case 2:
-                                xss.push_back(atof(data.c_str())/100);
+                                xss.push_back(atoll(data.c_str()));
                                 #ifdef DEBUG
                                 std::cout<< "stop=" <<data.c_str()<<std::endl;
                                 #endif
                                 break;
                             case 3:
-                                event_type.push_back(atof(data.c_str()));
+                                event_type.push_back(atoi(data.c_str()));
                                 #ifdef DEBUG
                                 std::cout<< "event=" <<data.c_str()<<std::endl;
                                 #endif
-                                break;
-                            // case 4:
-                            //     memory_addr.push_back(atof(data.c_str()));
-                            //     #ifdef DEBUG
-                            //     std::cout<< "memory=" <<data.c_str()<<std::endl;
-                            //     #endif
-                            //     break;                                
+                                break;                           
                             default:
                                 break;
                         }
@@ -601,36 +574,36 @@ int main(int, char**)
                         event_type.push_back(1);
                         event_type.push_back(1);
                         event_type.push_back(1);
-                        
-                        // memory_addr.push_back(0);
-                        // memory_addr.push_back(0);
-                        // memory_addr.push_back(0);
-                        // memory_addr.push_back(0);
-                        // memory_addr.push_back(0);
-                        // memory_addr.push_back(1);
-                        // memory_addr.push_back(1);
-                        // memory_addr.push_back(1);
-                        // memory_addr.push_back(1);
-                        // memory_addr.push_back(1);
-                        // memory_addr.push_back(1);
-                        // memory_addr.push_back(1);
-                        // memory_addr.push_back(1);
-                        // memory_addr.push_back(1);
-                        // memory_addr.push_back(1);
                         break;
                         
                     }
+                    else
+                    {
+                        calculate_0 = false;
+                    }
+                    
                 }     
             }
             // Close file
             inFile.close(); 
             fileDialog.ClearSelected();
 
+            ImPlot2::find_min_max(&xs,&xss,time_min,time_max);
+            ImPlot2::find_min_max(&thread_id,&thread_id,core_min,core_max);
+            
+            for (int i=0;i<(int)xs.size();++i)
+            {
+                xs[i] -= *time_min;
+                xss[i] -= *time_min;
+                thread_id[i] -= *core_min;
+            }
+
+
             // Sort time
             ImPlot2::pairsort(xs.data(),thread_id.data(),xss.data(),event_type.data(),xs.size());
 
         }
-        //ImPlot::ShowDemoWindow();
+        ImPlot::ShowDemoWindow();
         // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
         {
             ImGui::Begin("TM Visualizer option");                          // Create a window called "Hello, world!" and append into it.
@@ -643,84 +616,73 @@ int main(int, char**)
         if (show_visualizer)
         {
             ImGui::Begin("TM Visualizer", &show_visualizer);
+            ImPlot::SetNextPlotLimitsY(*core_min, *core_max ,ImGuiCond_Once);
+            ImPlot::SetNextPlotLimitsX(*time_min, *time_max ,ImGuiCond_Once);
+
+
             ImGui::Checkbox("RAW DATA",&raw);
-            // ImGui::SameLine();
-            // ImGui::Text("");
-            //ImGui::Checkbox("every transactions",&every_100);
+            ImGui::Checkbox("Calculate every",&every_ns);
             ImGui::SameLine();
-            ImGui::SliderFloat("x",&every_transactions,10.0,1000.0);
-            ImGui::Checkbox("Do fine grain locks",&FGL);
-            ImPlot::SetNextPlotLimitsY(-1.0, 6.5);
-            ImPlot::SetNextPlotLimitsX(-100, 1500);
-            
-            if (ImPlot::BeginPlot("Real time visualizer",NULL,NULL,ImVec2(-1,-1),0,ImPlotAxisFlags_RangeFit)) 
+            ImGui::SliderFloat("x",&every_transactions,1000.0,100000.0);
+            if (ImGui::IsItemActive())
             {
-                
-                //initalize the plots
-                if(!initialized_plot){
-                    //thread
-                    ImPlot2::vector_Random_t_id(size,&thread_id);
-                    //xs and sxx
-                    ImPlot2::vector_Random_xs(size,&xs,&xss,10);
-                    //event
-                    ImPlot2::vector_Random_event(size,&event_type);
-                    //memory
-                    //ImPlot2::vector_Random_memory(size,&memory_addr);
-                    initialized_plot = true;
+                calculate_0 = false;
+            }   
+            ImGui::SameLine();
+            ImGui::Text(" ns");
+                        
+            if (ImPlot::BeginPlot("Real time visualizer","X","Y",ImVec2(-1,-1),0,ImPlotAxisFlags_RangeFit,ImPlotAxisFlags_RangeFit)) 
+            {
+                if(raw){
+                    ImPlot2::PlotTM("Event",xs.data(), xss.data(), thread_id.data(), event_type.data(), event_type.size(), rollback, delay, commit);
                 }
-                
-                ImPlot2::PlotTM("Event",xs.data(), xss.data(), thread_id.data(), event_type.data(), event_type.size(), rollback, delay, commit);
+                if(every_ns)
+                {   
+                    
+                   
+                    if(!calculate_0)
+                    {
 
-                // if(every_100)
-                // {   
-                //     analysis_thread_id.clear();
-                //     analysis_xs.clear();
-                //     analysis_xss.clear();
-                //     analysis_event_type.clear();
+                        calculate_0 = true;
+                        analysis_thread_id.clear();
+                        analysis_xs.clear();
+                        analysis_xss.clear();
+                        analysis_event_type.clear();
+                        center_point.clear();
+                        abort_rate.clear();
+                        double abort_temp,center_temp;
+                        
+                        for(int i =0; i<floor(xs.back()/every_transactions); ++i )
+                        {
+                            std::vector<long long unsigned int>::iterator lower,upper;
+                            lower = std::lower_bound (xs.begin(), xs.end(), every_transactions*i);
+                            upper = std::upper_bound (xs.begin(), xs.end(), every_transactions*(i+1)+0.1);
+                            int start = lower-xs.begin();
+                            int stop = upper-xs.begin();
+                            int thread_nums = (int)(core_max-core_min);
+                            
+                            center_temp = (double)(xs[start] + xs[stop-1]) /2.0;
+                            abort_temp = 0.0;
 
-                //     for(int i =0; i<floor(xs.back()/every_transactions); ++i )
-                //     {
-                //         std::vector<double>::iterator lower,upper;
-                //         lower = std::lower_bound (xs.begin(), xs.end(), every_transactions*i);
-                //         upper = std::upper_bound (xs.begin(), xs.end(), every_transactions*(i+1)+0.1);
-                //         int start = lower-xs.begin();
-                //         int stop = upper-xs.begin();
-                //         double every_type[6][2];
-                //         #ifdef DEBUG
-                //         std::cout << "Now " << every_transactions << " lower " << start  << " upper " << stop << std::endl;
-                //         #endif
-                //         for(int j=start;j<stop;++j)
-                //         {
-                //             every_type[(int)thread_id[j] ][1] += event_type[j];
-                //             every_type[(int)thread_id[j] ][2] += 1;
-                //             #ifdef DEBUG
-                //             std::cout << "thread_id " << (int)thread_id[j] << "sum " << every_type[(int)thread_id[j]][2] << std::endl;
-                //             #endif
-                //         }
-                //         for(int j=0;j<6;++j)
-                //         {
-                //             every_type[j][1] /= every_type[j][2];
-                //             analysis_thread_id.push_back( (double)j -6 );
-                //             analysis_event_type.push_back( every_type[j][1]);
-                //             analysis_xs.push_back(every_transactions*i);
-                //             analysis_xss.push_back(every_transactions*(i+1)+0.1);
-                //             #ifdef DEBUG
-                //             std::cout << "thread_id" << j << "average" << every_type[j][1] << std::endl;
-                //             #endif
-                //         }
-                //         for(int j=0;j<6;++j)
-                //         {
-
-                //             every_type[j][1] =0;
-                //             every_type[j][2] =0;
-                //         }
-
-                //     }
-                //     #ifdef DEBUG
-                //     std::cout<< "the size should be" << floor(event_type.size()/every_transactions) << std::endl;
-                //     #endif
-                //     ImPlot2::PlotTM2("Analysis",analysis_xs.data(), analysis_xss.data(), analysis_thread_id.data(), analysis_event_type.data(), analysis_event_type.size(), bullCol, bearCol);
-                // }
+                            for(int j=start;j<stop;j++)
+                            {
+                                if(event_type[j]==2)
+                                {
+                                    abort_temp += 1.0;
+                                }
+                            }
+                            if(stop!=start){
+                                abort_temp /= (double)(stop-start);
+                                center_point.push_back(center_temp);
+                                abort_rate.push_back(abort_temp);
+                            }
+                        }
+                    }else{
+                        printf("%d \n\n",abort_rate.size());
+                        ImPlot::PlotLine("Commit rate", center_point.data(), abort_rate.data(), abort_rate.size());
+                    }
+                    //ImPlot2::PlotTM("Analysis",analysis_xs.data(), analysis_xss.data(), analysis_thread_id.data(), analysis_event_type.data(), analysis_event_type.size(), rollback, delay, commit);
+                }
             //     if(FGL)
             //     {
 
@@ -786,7 +748,7 @@ int main(int, char**)
                 ImPlot::EndPlot();
             }
 
-            ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+            //ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
             ImGui::End();
         }
 
@@ -808,7 +770,12 @@ int main(int, char**)
     ImGui_ImplGlfw_Shutdown();
     ImPlot::DestroyContext();
     ImGui::DestroyContext();
-
+    
+    //free
+    free(core_min);
+    free(core_max);
+    free(time_min);
+    free(time_max);
     glfwDestroyWindow(window);
     glfwTerminate();
 
