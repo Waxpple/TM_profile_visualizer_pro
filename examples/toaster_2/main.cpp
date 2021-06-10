@@ -157,7 +157,36 @@ void find_min_max(std::vector<T>* xs,std::vector<T>* xss,T* min, T* max)
 
 void pairsort(unsigned long long int* a, double* b, unsigned long long int* c, int* d, int n)
 {
-    std::pair<double, std::pair<double, std:: pair <double, double > > > pairt[n];
+    std::pair<unsigned long long int, std::pair<double, std:: pair <unsigned long long int, int > > > pairt[n];
+  
+    // Storing the respective array
+    // elements in pairs.
+    for (int i = 0; i < n; i++) 
+    {
+        pairt[i].first = a[i];
+        pairt[i].second.first = b[i];
+        pairt[i].second.second.first = c[i];
+        pairt[i].second.second.second = d[i];
+        
+    }
+  
+    // Sorting the pair array.
+    std::sort(pairt, pairt + n);
+      
+    // Modifying original arrays
+    for (int i = 0; i < n; i++) 
+    {
+        a[i] = pairt[i].first;
+        b[i] = pairt[i].second.first;
+        c[i] = pairt[i].second.second.first;
+        d[i] = pairt[i].second.second.second;
+
+    }
+}
+
+void pairsort_on_core(double* a, unsigned long long int* b, unsigned long long int* c, int* d, int n)
+{
+    std::pair<double, std::pair<unsigned long long int, std:: pair <unsigned long long int, int > > > pairt[n];
   
     // Storing the respective array
     // elements in pairs.
@@ -307,15 +336,41 @@ int main(int, char**)
     std::vector<unsigned long long int> xss;
     std::vector<int> event_type;
     // std::vector<long long int> memory_addr;
-    std::vector<double> analysis_thread_id;
-    std::vector<unsigned long long int> analysis_xs;
-    std::vector<unsigned long long int> analysis_xss;
-    std::vector<double> analysis_event_type;
+    std::vector<double> core_0_analysis_thread_id;
+    std::vector<unsigned long long int> core_0_analysis_xs;
+    std::vector<unsigned long long int> core_0_analysis_xss;
+    std::vector<double> core_0_analysis_event_type;
+    std::vector<double> core_0_center_point;
+    std::vector<double> core_0_abort_rate;
+
+    std::vector<double> core_1_analysis_thread_id;
+    std::vector<unsigned long long int> core_1_analysis_xs;
+    std::vector<unsigned long long int> core_1_analysis_xss;
+    std::vector<double> core_1_analysis_event_type;
+    std::vector<double> core_1_center_point;
+    std::vector<double> core_1_abort_rate;
+
+    std::vector<double> core_2_analysis_thread_id;
+    std::vector<unsigned long long int> core_2_analysis_xs;
+    std::vector<unsigned long long int> core_2_analysis_xss;
+    std::vector<double> core_2_analysis_event_type;
+    std::vector<double> core_2_center_point;
+    std::vector<double> core_2_abort_rate;
+    
+    std::vector<double> core_3_analysis_thread_id;
+    std::vector<unsigned long long int> core_3_analysis_xs;
+    std::vector<unsigned long long int> core_3_analysis_xss;
+    std::vector<double> core_3_analysis_event_type;
+    std::vector<double> core_3_center_point;
+    std::vector<double> core_3_abort_rate;
+    //
+    // std::vector<double> center_point;
+    // std::vector<double> abort_rate;
 
     //
-    std::vector<double> center_point;
-    std::vector<double> abort_rate;
-
+    std::vector<double> core_list;
+    std::vector<int> core_index;
+    
     // std::vector<double> FGL_thread_id;
     // std::vector<double> FGL_xs;
     // std::vector<double> FGL_xss;
@@ -597,11 +652,77 @@ int main(int, char**)
                 xss[i] -= *time_min;
                 thread_id[i] -= *core_min;
             }
+            
+            for (int i=0;i<=(int)(*core_max-*core_min);++i)
+            {
+                if(std::find(thread_id.begin(),thread_id.end(),(double)i) != thread_id.end()) 
+                {
+                    core_list.push_back((double)i);
+                }
+            }
+            std::ofstream output_file("./core_list.txt");
+            for (const auto &e :core_list) output_file << e << "\n";
+
+
 
 
             // Sort time
-            ImPlot2::pairsort(xs.data(),thread_id.data(),xss.data(),event_type.data(),xs.size());
+            ImPlot2::pairsort_on_core(thread_id.data(),xs.data(),xss.data(),event_type.data(),xs.size());
 
+            // Put them into different thread file
+            std::vector<double>::iterator upper;
+            for (int i=0;i<core_list.size();++i)
+            {
+                upper = std::upper_bound (thread_id.begin(), thread_id.end(), core_list[i]);
+                int ans = upper-thread_id.begin();
+                //printf("The end of core %0f is:%d\n\n", core_list[i] ,ans );
+                core_index.push_back(ans);
+            }
+            for (int i=0;i<core_index.size();++i)
+            {
+                int start_point;
+                if(i==0)
+                    start_point = 0;
+                else
+                    start_point = core_index[i-1];
+                int stop_point;
+                stop_point = core_index[i];
+                for(int j=start_point;j<stop_point;++j)
+                {
+                    switch (i)
+                    {
+                    case 0:
+                        core_0_analysis_thread_id.push_back(thread_id[j]);
+                        core_0_analysis_xs.push_back(xs[j]);
+                        core_0_analysis_xss.push_back(xss[j]);
+                        core_0_analysis_event_type.push_back(event_type[j]);
+                        break;
+                    case 1:
+                        core_1_analysis_thread_id.push_back(thread_id[j]);
+                        core_1_analysis_xs.push_back(xs[j]);
+                        core_1_analysis_xss.push_back(xss[j]);
+                        core_1_analysis_event_type.push_back(event_type[j]);
+                        break;
+                    case 2:
+                        core_2_analysis_thread_id.push_back(thread_id[j]);
+                        core_2_analysis_xs.push_back(xs[j]);
+                        core_2_analysis_xss.push_back(xss[j]);
+                        core_2_analysis_event_type.push_back(event_type[j]);
+                        break;
+                    case 3:
+                        core_3_analysis_thread_id.push_back(thread_id[j]);
+                        core_3_analysis_xs.push_back(xs[j]);
+                        core_3_analysis_xss.push_back(xss[j]);
+                        core_3_analysis_event_type.push_back(event_type[j]);
+                        break;
+                    default:
+                        printf("[Error] Distribute thread into void!");
+                        break;
+                    }
+                }
+            }
+
+            
         }
         ImPlot::ShowDemoWindow();
         // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
@@ -623,7 +744,7 @@ int main(int, char**)
             ImGui::Checkbox("RAW DATA",&raw);
             ImGui::Checkbox("Calculate every",&every_ns);
             ImGui::SameLine();
-            ImGui::SliderFloat("x",&every_transactions,1000.0,100000.0);
+            ImGui::SliderFloat("x",&every_transactions,1000.0,10000000.0);
             if (ImGui::IsItemActive())
             {
                 calculate_0 = false;
@@ -636,6 +757,7 @@ int main(int, char**)
                 if(raw){
                     ImPlot2::PlotTM("Event",xs.data(), xss.data(), thread_id.data(), event_type.data(), event_type.size(), rollback, delay, commit);
                 }
+
                 if(every_ns)
                 {   
                     
@@ -644,42 +766,159 @@ int main(int, char**)
                     {
 
                         calculate_0 = true;
-                        analysis_thread_id.clear();
-                        analysis_xs.clear();
-                        analysis_xss.clear();
-                        analysis_event_type.clear();
-                        center_point.clear();
-                        abort_rate.clear();
+                        core_0_center_point.clear();
+                        core_0_abort_rate.clear();
+                        core_1_center_point.clear();
+                        core_1_abort_rate.clear();
+                        core_2_center_point.clear();
+                        core_2_abort_rate.clear();
+                        core_3_center_point.clear();
+                        core_3_abort_rate.clear();
                         double abort_temp,center_temp;
                         
-                        for(int i =0; i<floor(xs.back()/every_transactions); ++i )
+                        for(int j=0;j<core_list.size();++j)
                         {
-                            std::vector<long long unsigned int>::iterator lower,upper;
-                            lower = std::lower_bound (xs.begin(), xs.end(), every_transactions*i);
-                            upper = std::upper_bound (xs.begin(), xs.end(), every_transactions*(i+1)+0.1);
-                            int start = lower-xs.begin();
-                            int stop = upper-xs.begin();
-                            int thread_nums = (int)(core_max-core_min);
-                            
-                            center_temp = (double)(xs[start] + xs[stop-1]) /2.0;
-                            abort_temp = 0.0;
-
-                            for(int j=start;j<stop;j++)
+                            switch (j)
                             {
-                                if(event_type[j]==2)
+                            case 0:
+                                for(int i =0; i<floor(core_0_analysis_xs.back()/every_transactions); ++i )
                                 {
-                                    abort_temp += 1.0;
+                                    std::vector<long long unsigned int>::iterator lower,upper;
+                                    lower = std::lower_bound (core_0_analysis_xs.begin(), core_0_analysis_xs.end(), every_transactions*i);
+                                    upper = std::upper_bound (core_0_analysis_xs.begin(), core_0_analysis_xs.end(), every_transactions*(i+1)+0.1);
+                                    int start = lower-core_0_analysis_xs.begin();
+                                    int stop = upper-core_0_analysis_xs.begin();
+                                    
+                                    center_temp = (double)(core_0_analysis_xs[start] + core_0_analysis_xs[stop-1]) /2.0;
+                                    abort_temp = 0.0;
+
+                                    for(int j=start;j<stop;j++)
+                                    {
+                                        if(core_0_analysis_event_type[j]==2)
+                                        {
+                                            abort_temp += 1.0;
+                                        }
+                                    }
+                                    if(stop!=start){
+                                        abort_temp /= (double)(stop-start);
+                                        core_0_center_point.push_back(center_temp);
+                                        core_0_abort_rate.push_back(abort_temp);
+                                    }
                                 }
+                                break;
+                            case 1:
+                                for(int i =0; i<floor(core_1_analysis_xs.back()/every_transactions); ++i )
+                                {
+                                    std::vector<long long unsigned int>::iterator lower,upper;
+                                    lower = std::lower_bound (core_1_analysis_xs.begin(), core_1_analysis_xs.end(), every_transactions*i);
+                                    upper = std::upper_bound (core_1_analysis_xs.begin(), core_1_analysis_xs.end(), every_transactions*(i+1)+0.1);
+                                    int start = lower-core_1_analysis_xs.begin();
+                                    int stop = upper-core_1_analysis_xs.begin();
+                                    
+                                    center_temp = (double)(core_1_analysis_xs[start] + core_1_analysis_xs[stop-1]) /2.0;
+                                    abort_temp = 0.0;
+
+                                    for(int j=start;j<stop;j++)
+                                    {
+                                        if(core_1_analysis_event_type[j]==2)
+                                        {
+                                            abort_temp += 1.0;
+                                        }
+                                    }
+                                    if(stop!=start){
+                                        abort_temp /= (double)(stop-start);
+                                        core_1_center_point.push_back(center_temp);
+                                        core_1_abort_rate.push_back(abort_temp);
+                                    }
+                                }
+                                break;
+                            case 2:
+                                for(int i =0; i<floor(core_2_analysis_xs.back()/every_transactions); ++i )
+                                {
+                                    std::vector<long long unsigned int>::iterator lower,upper;
+                                    lower = std::lower_bound (core_2_analysis_xs.begin(), core_2_analysis_xs.end(), every_transactions*i);
+                                    upper = std::upper_bound (core_2_analysis_xs.begin(), core_2_analysis_xs.end(), every_transactions*(i+1)+0.1);
+                                    int start = lower-core_2_analysis_xs.begin();
+                                    int stop = upper-core_2_analysis_xs.begin();
+                                    
+                                    center_temp = (double)(core_2_analysis_xs[start] + core_2_analysis_xs[stop-1]) /2.0;
+                                    abort_temp = 0.0;
+
+                                    for(int j=start;j<stop;j++)
+                                    {
+                                        if(core_2_analysis_event_type[j]==2)
+                                        {
+                                            abort_temp += 1.0;
+                                        }
+                                    }
+                                    if(stop!=start){
+                                        abort_temp /= (double)(stop-start);
+                                        core_2_center_point.push_back(center_temp);
+                                        core_2_abort_rate.push_back(abort_temp);
+                                    }
+                                }
+                                break;
+                            case 3:
+                                for(int i =0; i<floor(core_3_analysis_xs.back()/every_transactions); ++i )
+                                {
+                                    std::vector<long long unsigned int>::iterator lower,upper;
+                                    lower = std::lower_bound (core_3_analysis_xs.begin(), core_3_analysis_xs.end(), every_transactions*i);
+                                    upper = std::upper_bound (core_3_analysis_xs.begin(), core_3_analysis_xs.end(), every_transactions*(i+1)+0.1);
+                                    int start = lower-core_3_analysis_xs.begin();
+                                    int stop = upper-core_3_analysis_xs.begin();
+                                    
+                                    center_temp = (double)(core_3_analysis_xs[start] + core_3_analysis_xs[stop-1]) /2.0;
+                                    abort_temp = 0.0;
+
+                                    for(int j=start;j<stop;j++)
+                                    {
+                                        if(core_3_analysis_event_type[j]==2)
+                                        {
+                                            abort_temp += 1.0;
+                                        }
+                                    }
+                                    if(stop!=start){
+                                        abort_temp /= (double)(stop-start);
+                                        core_3_center_point.push_back(center_temp);
+                                        core_3_abort_rate.push_back(abort_temp);
+                                    }
+                                }
+                                break;
+                            default:
+                                break;
                             }
-                            if(stop!=start){
-                                abort_temp /= (double)(stop-start);
-                                center_point.push_back(center_temp);
-                                abort_rate.push_back(abort_temp);
+                            
+                        }
+                        
+                        // std::copy_if(thread_id.begin(),thread_id.end(),std::back_inserter(analysis_thread_id),[](double i){return i==0.0;});
+                        // std::ofstream output_file("./example.txt");
+                        // for (const auto &e :analysis_thread_id) output_file << e << "\n";
+                    }else{
+                        #ifdef DEBUG
+                            printf("%d \n\n",abort_rate.size());
+                        #endif
+                        for(int j=0;j<core_list.size();++j)
+                        {
+                            switch (j)
+                            {
+                            case 0:
+                                ImPlot::PlotLine("Core_0_commit_rate", core_0_center_point.data(), core_0_abort_rate.data(), core_0_abort_rate.size());
+                                break;
+                            case 1:
+                                ImPlot::PlotLine("Core_1_commit_rate", core_1_center_point.data(), core_1_abort_rate.data(), core_1_abort_rate.size());
+                                break;
+                            case 2:
+                                ImPlot::PlotLine("Core_2_commit_rate", core_2_center_point.data(), core_2_abort_rate.data(), core_2_abort_rate.size());
+                                break;
+                            case 3:
+                                ImPlot::PlotLine("Core_3_commit_rate", core_3_center_point.data(), core_3_abort_rate.data(), core_3_abort_rate.size());
+                                break;
+                            default:
+                                printf("[Error] cannot draw analysis at abort_rate.");
+                                break;
                             }
                         }
-                    }else{
-                        printf("%d \n\n",abort_rate.size());
-                        ImPlot::PlotLine("Commit rate", center_point.data(), abort_rate.data(), abort_rate.size());
+                        
                     }
                     //ImPlot2::PlotTM("Analysis",analysis_xs.data(), analysis_xss.data(), analysis_thread_id.data(), analysis_event_type.data(), analysis_event_type.size(), rollback, delay, commit);
                 }
