@@ -342,6 +342,8 @@ int main(int, char**)
     std::vector<double> core_0_analysis_event_type;
     std::vector<double> core_0_center_point;
     std::vector<double> core_0_abort_rate;
+    std::vector<double> core_0_commit_rate;
+    std::vector<double> core_0_average_duration;
 
     std::vector<double> core_1_analysis_thread_id;
     std::vector<unsigned long long int> core_1_analysis_xs;
@@ -349,6 +351,9 @@ int main(int, char**)
     std::vector<double> core_1_analysis_event_type;
     std::vector<double> core_1_center_point;
     std::vector<double> core_1_abort_rate;
+    std::vector<double> core_1_commit_rate;
+    std::vector<double> core_1_average_duration;
+
 
     std::vector<double> core_2_analysis_thread_id;
     std::vector<unsigned long long int> core_2_analysis_xs;
@@ -356,6 +361,8 @@ int main(int, char**)
     std::vector<double> core_2_analysis_event_type;
     std::vector<double> core_2_center_point;
     std::vector<double> core_2_abort_rate;
+    std::vector<double> core_2_commit_rate;
+    std::vector<double> core_2_average_duration;
     
     std::vector<double> core_3_analysis_thread_id;
     std::vector<unsigned long long int> core_3_analysis_xs;
@@ -363,6 +370,8 @@ int main(int, char**)
     std::vector<double> core_3_analysis_event_type;
     std::vector<double> core_3_center_point;
     std::vector<double> core_3_abort_rate;
+    std::vector<double> core_3_commit_rate;
+    std::vector<double> core_3_average_duration;
     //
     // std::vector<double> center_point;
     // std::vector<double> abort_rate;
@@ -768,13 +777,24 @@ int main(int, char**)
                         calculate_0 = true;
                         core_0_center_point.clear();
                         core_0_abort_rate.clear();
+                        core_0_commit_rate.clear();
+                        core_0_average_duration.clear();
+
                         core_1_center_point.clear();
                         core_1_abort_rate.clear();
+                        core_1_commit_rate.clear();
+                        core_1_average_duration.clear();
+
                         core_2_center_point.clear();
                         core_2_abort_rate.clear();
+                        core_2_commit_rate.clear();
+                        core_2_average_duration.clear();
+                        
                         core_3_center_point.clear();
                         core_3_abort_rate.clear();
-                        double abort_temp,center_temp;
+                        core_3_commit_rate.clear();
+                        core_3_average_duration.clear();
+                        double abort_temp,commit_temp,center_temp,average_duration_temp;
                         
                         for(int j=0;j<core_list.size();++j)
                         {
@@ -791,18 +811,29 @@ int main(int, char**)
                                     
                                     center_temp = (double)(core_0_analysis_xs[start] + core_0_analysis_xs[stop-1]) /2.0;
                                     abort_temp = 0.0;
-
+                                    commit_temp =0.0;
+                                    average_duration_temp = 0.0;
                                     for(int j=start;j<stop;j++)
                                     {
-                                        if(core_0_analysis_event_type[j]==2)
+                                        if(core_0_analysis_event_type[j]==0)
                                         {
                                             abort_temp += 1.0;
                                         }
+                                        if(core_0_analysis_event_type[j]==2)
+                                        {
+                                            commit_temp += 1.0;
+                                        }
+                                        average_duration_temp += core_0_analysis_xss[j] - core_0_analysis_xs[j];
+
                                     }
                                     if(stop!=start){
                                         abort_temp /= (double)(stop-start);
+                                        commit_temp /= (double)(stop-start);
+                                        average_duration_temp /= (double)(stop-start);
                                         core_0_center_point.push_back(center_temp);
+                                        core_0_commit_rate.push_back(commit_temp);
                                         core_0_abort_rate.push_back(abort_temp);
+                                        core_0_average_duration.push_back(average_duration_temp);
                                     }
                                 }
                                 break;
@@ -817,18 +848,29 @@ int main(int, char**)
                                     
                                     center_temp = (double)(core_1_analysis_xs[start] + core_1_analysis_xs[stop-1]) /2.0;
                                     abort_temp = 0.0;
-
+                                    commit_temp =0.0;
+                                    average_duration_temp = 0.0;
                                     for(int j=start;j<stop;j++)
                                     {
-                                        if(core_1_analysis_event_type[j]==2)
+                                        if(core_1_analysis_event_type[j]==0)
                                         {
                                             abort_temp += 1.0;
                                         }
+                                        if(core_1_analysis_event_type[j]==2)
+                                        {
+                                            commit_temp += 1.0;
+                                        }
+                                        average_duration_temp += core_1_analysis_xss[j] - core_1_analysis_xs[j];
+
                                     }
                                     if(stop!=start){
                                         abort_temp /= (double)(stop-start);
+                                        commit_temp /= (double)(stop-start);
+                                        average_duration_temp /= (double)(stop-start);
                                         core_1_center_point.push_back(center_temp);
+                                        core_1_commit_rate.push_back(commit_temp);
                                         core_1_abort_rate.push_back(abort_temp);
+                                        core_1_average_duration.push_back(average_duration_temp);
                                     }
                                 }
                                 break;
@@ -843,18 +885,29 @@ int main(int, char**)
                                     
                                     center_temp = (double)(core_2_analysis_xs[start] + core_2_analysis_xs[stop-1]) /2.0;
                                     abort_temp = 0.0;
-
+                                    commit_temp =0.0;
+                                    average_duration_temp = 0.0;
                                     for(int j=start;j<stop;j++)
                                     {
-                                        if(core_2_analysis_event_type[j]==2)
+                                        if(core_2_analysis_event_type[j]==0)
                                         {
                                             abort_temp += 1.0;
                                         }
+                                        if(core_2_analysis_event_type[j]==2)
+                                        {
+                                            commit_temp += 1.0;
+                                        }
+                                        average_duration_temp += core_2_analysis_xss[j] - core_2_analysis_xs[j];
+
                                     }
                                     if(stop!=start){
                                         abort_temp /= (double)(stop-start);
+                                        commit_temp /= (double)(stop-start);
+                                        average_duration_temp /= (double)(stop-start);
                                         core_2_center_point.push_back(center_temp);
+                                        core_2_commit_rate.push_back(commit_temp);
                                         core_2_abort_rate.push_back(abort_temp);
+                                        core_2_average_duration.push_back(average_duration_temp);
                                     }
                                 }
                                 break;
@@ -869,21 +922,33 @@ int main(int, char**)
                                     
                                     center_temp = (double)(core_3_analysis_xs[start] + core_3_analysis_xs[stop-1]) /2.0;
                                     abort_temp = 0.0;
-
+                                    commit_temp =0.0;
+                                    average_duration_temp = 0.0;
                                     for(int j=start;j<stop;j++)
                                     {
-                                        if(core_3_analysis_event_type[j]==2)
+                                        if(core_3_analysis_event_type[j]==0)
                                         {
                                             abort_temp += 1.0;
                                         }
+                                        if(core_3_analysis_event_type[j]==2)
+                                        {
+                                            commit_temp += 1.0;
+                                        }
+                                        average_duration_temp += core_3_analysis_xss[j] - core_3_analysis_xs[j];
+
                                     }
                                     if(stop!=start){
                                         abort_temp /= (double)(stop-start);
+                                        commit_temp /= (double)(stop-start);
+                                        average_duration_temp /= (double)(stop-start);
                                         core_3_center_point.push_back(center_temp);
+                                        core_3_commit_rate.push_back(commit_temp);
                                         core_3_abort_rate.push_back(abort_temp);
+                                        core_3_average_duration.push_back(average_duration_temp);
                                     }
                                 }
                                 break;
+
                             default:
                                 break;
                             }
@@ -902,16 +967,24 @@ int main(int, char**)
                             switch (j)
                             {
                             case 0:
-                                ImPlot::PlotLine("Core_0_commit_rate", core_0_center_point.data(), core_0_abort_rate.data(), core_0_abort_rate.size());
+                                ImPlot::PlotLine("Core_0_abort_rate", core_0_center_point.data(), core_0_abort_rate.data(), core_0_abort_rate.size());
+                                ImPlot::PlotLine("Core_0_commit_rate",core_0_center_point.data(),core_0_commit_rate.data(), core_0_commit_rate.size());
+                                ImPlot::PlotLine("Core_0_average_duration",core_0_center_point.data(),core_0_average_duration.data(), core_0_commit_rate.size());
                                 break;
                             case 1:
-                                ImPlot::PlotLine("Core_1_commit_rate", core_1_center_point.data(), core_1_abort_rate.data(), core_1_abort_rate.size());
+                                ImPlot::PlotLine("Core_1_abort_rate", core_1_center_point.data(), core_1_abort_rate.data(), core_1_abort_rate.size());
+                                ImPlot::PlotLine("Core_1_commit_rate",core_1_center_point.data(),core_1_commit_rate.data(), core_1_commit_rate.size());
+                                ImPlot::PlotLine("Core_1_average_duration",core_1_center_point.data(),core_1_average_duration.data(), core_1_commit_rate.size());
                                 break;
                             case 2:
-                                ImPlot::PlotLine("Core_2_commit_rate", core_2_center_point.data(), core_2_abort_rate.data(), core_2_abort_rate.size());
+                                ImPlot::PlotLine("Core_2_abort_rate", core_2_center_point.data(), core_2_abort_rate.data(), core_2_abort_rate.size());
+                                ImPlot::PlotLine("Core_2_commit_rate",core_2_center_point.data(),core_2_commit_rate.data(), core_2_commit_rate.size());
+                                ImPlot::PlotLine("Core_2_average_duration",core_2_center_point.data(),core_2_average_duration.data(), core_2_commit_rate.size());
                                 break;
                             case 3:
-                                ImPlot::PlotLine("Core_3_commit_rate", core_3_center_point.data(), core_3_abort_rate.data(), core_3_abort_rate.size());
+                                ImPlot::PlotLine("Core_3_abort_rate", core_3_center_point.data(), core_3_abort_rate.data(), core_3_abort_rate.size());
+                                ImPlot::PlotLine("Core_3_commit_rate",core_3_center_point.data(),core_3_commit_rate.data(), core_3_commit_rate.size());
+                                ImPlot::PlotLine("Core_3_average_duration",core_3_center_point.data(),core_3_average_duration.data(), core_3_commit_rate.size());
                                 break;
                             default:
                                 printf("[Error] cannot draw analysis at abort_rate.");
