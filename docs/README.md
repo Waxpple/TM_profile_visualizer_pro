@@ -3,13 +3,13 @@ TM_profile_visualizer_pro
 # Pre-request
 ```
 apt-get update -y
-apt-get install gcc-9 gcc+9
+apt-get install gcc-9 gcc-9
 apt-get install libglfw3-dev
 ```
 # This example build only work on Linux platform.
 ```
 git clone https://github.com/Waxpple/TM_profile_visualizer_pro.git
-cd TM_profile_visualizer_pro/examples/toast
+cd TM_profile_visualizer_pro/examples/toaster
 make clean
 make
 ```
