@@ -725,11 +725,12 @@ int main(int, char**)
                         core_3_analysis_event_type.push_back(event_type[j]);
                         break;
                     default:
-                        printf("[Error] Distribute thread into void!");
+                        printf("[Error] Distribute thread into void! #Core %d \n",i);
                         break;
                     }
                 }
             }
+            ImPlot2::pairsort(xs.data(),thread_id.data(),xss.data(),event_type.data(),xs.size());
 
             
         }
